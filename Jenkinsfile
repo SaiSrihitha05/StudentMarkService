@@ -30,7 +30,7 @@ pipeline {
         stage('K8s Deployment') {
             steps {
                 script {
-                    withEnv(["KUBECONFIG=c:\\users\\test\\.kube\\config"]) {
+                        withEnv(["KUBECONFIG=C:\\Users\\HP\\.kube\\config"]) {
 
                         // ✔ FIXED: No backslashes, fully Groovy-safe
                         powershell '''
