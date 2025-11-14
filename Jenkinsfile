@@ -33,28 +33,29 @@ pipeline {
                         withEnv(["KUBECONFIG=C:\\Users\\HP\\.kube\\config"]) {
 
                         // ✔ FIXED: No backslashes, fully Groovy-safe
-                        powershell '''
+powershell '''
 (Get-Content k8s/namespace-template.yaml) `
-    -replace '\${APP_NAMESPACE}', '${APP_NAMESPACE}' `
-    -replace '\${APP_NAME}', '${APP_NAME}' |
+    -replace '\\\${APP_NAMESPACE}', '${APP_NAMESPACE}' `
+    -replace '\\\${APP_NAME}', '${APP_NAME}' |
     Set-Content k8s/namespace.yaml
 
 (Get-Content k8s/deployment-template.yaml) `
-    -replace '\${APP_NAME}', '${APP_NAME}' `
-    -replace '\${APP_NAMESPACE}', '${APP_NAMESPACE}' `
-    -replace '\${IMAGE_NAME}', '${IMAGE_NAME}' `
-    -replace '\${IMAGE_TAG}', '${IMAGE_TAG}' `
-    -replace '\${APP_PORT}', '${APP_PORT}' `
-    -replace '\${REPLICA_COUNT}', '${REPLICA_COUNT}' |
+    -replace '\\\${APP_NAME}', '${APP_NAME}' `
+    -replace '\\\${APP_NAMESPACE}', '${APP_NAMESPACE}' `
+    -replace '\\\${IMAGE_NAME}', '${IMAGE_NAME}' `
+    -replace '\\\${IMAGE_TAG}', '${IMAGE_TAG}' `
+    -replace '\\\${APP_PORT}', '${APP_PORT}' `
+    -replace '\\\${REPLICA_COUNT}', '${REPLICA_COUNT}' |
     Set-Content k8s/deployment.yaml
 
 (Get-Content k8s/service-template.yaml) `
-    -replace '\${APP_NAME}', '${APP_NAME}' `
-    -replace '\${APP_NAMESPACE}', '${APP_NAMESPACE}' `
-    -replace '\${APP_PORT}', '${APP_PORT}' `
-    -replace '\${NODE_PORT}', '${NODE_PORT}' |
+    -replace '\\\${APP_NAME}', '${APP_NAME}' `
+    -replace '\\\${APP_NAMESPACE}', '${APP_NAMESPACE}' `
+    -replace '\\\${APP_PORT}', '${APP_PORT}' `
+    -replace '\\\${NODE_PORT}', '${NODE_PORT}' |
     Set-Content k8s/service.yaml
 '''
+
 
                         bat "kubectl apply -f k8s/namespace.yaml --validate=false"
                         bat "kubectl apply -f k8s/deployment.yaml --validate=false"
