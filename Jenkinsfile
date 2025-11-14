@@ -27,20 +27,45 @@ pipeline {
             }
         }
 
-        stage('K8s Deployment') {
+        stage('Generate Kubernetes YAMLs') {
+            steps {
+                script {
+
+                    //
+                    // 🔥 PURE GROOVY VARIABLE REPLACEMENT → 100% SAFE
+                    //
+
+                    // Namespace
+                    def ns = readFile("k8s/namespace-template.yaml")
+                    ns = ns.replace("\${APP_NAMESPACE}", APP_NAMESPACE)
+                           .replace("\${APP_NAME}", APP_NAME)
+                    writeFile file: "k8s/namespace.yaml", text: ns
+
+                    // Deployment
+                    def dep = readFile("k8s/deployment-template.yaml")
+                    dep = dep.replace("\${APP_NAME}", APP_NAME)
+                             .replace("\${APP_NAMESPACE}", APP_NAMESPACE)
+                             .replace("\${IMAGE_NAME}", IMAGE_NAME)
+                             .replace("\${IMAGE_TAG}", IMAGE_TAG)
+                             .replace("\${APP_PORT}", APP_PORT)
+                             .replace("\${REPLICA_COUNT}", REPLICA_COUNT)
+                    writeFile file: "k8s/deployment.yaml", text: dep
+
+                    // Service
+                    def svc = readFile("k8s/service-template.yaml")
+                    svc = svc.replace("\${APP_NAME}", APP_NAME)
+                             .replace("\${APP_NAMESPACE}", APP_NAMESPACE)
+                             .replace("\${APP_PORT}", APP_PORT)
+                             .replace("\${NODE_PORT}", NODE_PORT)
+                    writeFile file: "k8s/service.yaml", text: svc
+                }
+            }
+        }
+
+        stage('Deploy to Kubernetes') {
             steps {
                 script {
                     withEnv(["KUBECONFIG=C:\\Users\\HP\\.kube\\config"]) {
-
-bat '''
-powershell -Command "(Get-Content 'k8s/namespace-template.yaml') -replace '\\$\\{APP_NAMESPACE\\}', '${APP_NAMESPACE}' -replace '\\$\\{APP_NAME\\}', '${APP_NAME}' | Set-Content 'k8s/namespace.yaml'"
-
-powershell -Command "(Get-Content 'k8s/deployment-template.yaml') -replace '\\$\\{APP_NAME\\}', '${APP_NAME}' -replace '\\$\\{APP_NAMESPACE\\}', '${APP_NAMESPACE}' -replace '\\$\\{IMAGE_NAME\\}', '${IMAGE_NAME}' -replace '\\$\\{IMAGE_TAG\\}', '${IMAGE_TAG}' -replace '\\$\\{APP_PORT\\}', '${APP_PORT}' -replace '\\$\\{REPLICA_COUNT\\}', '${REPLICA_COUNT}' | Set-Content 'k8s/deployment.yaml'"
-
-powershell -Command "(Get-Content 'k8s/service-template.yaml') -replace '\\$\\{APP_NAME\\}', '${APP_NAME}' -replace '\\$\\{APP_NAMESPACE\\}', '${APP_NAMESPACE}' -replace '\\$\\{APP_PORT\\}', '${APP_PORT}' -replace '\\$\\{NODE_PORT\\}', '${NODE_PORT}' | Set-Content 'k8s/service.yaml'"
-'''
-
-
 
                         bat "kubectl apply -f k8s/namespace.yaml --validate=false"
                         bat "kubectl apply -f k8s/deployment.yaml --validate=false"
@@ -53,10 +78,10 @@ powershell -Command "(Get-Content 'k8s/service-template.yaml') -replace '\\$\\{A
 
     post {
         success {
-            echo "✅ Checkout, Build, Dockerize & Deploy completed successfully!"
+            echo "✅ Successfully built, generated YAML and deployed to Kubernetes!"
         }
         failure {
-            echo "❌ Build failed!"
+            echo "❌ Build failed. Check logs!"
         }
     }
 }
